@@ -2,19 +2,32 @@ part of 'journey_bloc.dart';
 
 sealed class JourneyEvent {}
 
-final class JourneyWatchAllStarted extends JourneyEvent {}
+final class WatchMyJourney extends JourneyEvent {}
 
-final class JourneyWatchDriverStarted extends JourneyEvent {
-  final String driverId;
-  JourneyWatchDriverStarted({required this.driverId});
+final class JourneyStatusChanged extends JourneyEvent {
+  final String journeyUuid;
+  final String newStatus;
+  JourneyStatusChanged({required this.journeyUuid, required this.newStatus});
 }
 
-final class JourneyDeliveryStatusChanged extends JourneyEvent {
-  final String deliveryUuid;
+final class JourneyOrderStatusChanged extends JourneyEvent {
+  final String journeyUuid;
+  final String orderId;
   final String newStatus;
-
-  JourneyDeliveryStatusChanged({
-    required this.deliveryUuid,
+  JourneyOrderStatusChanged({
+    required this.journeyUuid,
+    required this.orderId,
     required this.newStatus,
   });
+}
+
+
+final class _JourneyDataReceived extends JourneyEvent {
+  final Journey? journey;
+  _JourneyDataReceived(this.journey);
+}
+
+final class _JourneyLoadFailed extends JourneyEvent {
+  final String message;
+  _JourneyLoadFailed(this.message);
 }

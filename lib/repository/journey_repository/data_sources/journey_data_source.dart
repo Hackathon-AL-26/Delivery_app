@@ -1,13 +1,19 @@
-import 'package:livreur_infflux/models/journey.dart';
-
+import '../../../models/journey.dart';
 
 abstract class JourneyDataSource {
-  Stream<List<Journey>> watchJourney();
+  /// Écoute la journey du driver connecté via /journeys/me.
+  Stream<Journey?> watchMyJourney();
 
-  Stream<List<Journey>> watchDriverJourney({required String driverId});
+  /// Met à jour le statut de la journey.
+  Future<void> updateJourneyStatus({
+    required String journeyUuid,
+    required String newStatus,
+  });
 
-  Future<void> updateDeliveryStatus({
-    required String deliveryUuid,
+  /// Met à jour le statut d'une journey_order.
+  Future<void> updateJourneyOrderStatus({
+    required String journeyUuid,
+    required String orderId,
     required String newStatus,
   });
 }

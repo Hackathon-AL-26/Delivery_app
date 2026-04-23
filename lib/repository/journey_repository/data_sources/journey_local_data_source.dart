@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import '../../../models/enums/journey_status.dart';
+import '../../../models/enums/truck_type.dart';
+import '../../../models/enums/truck_status.dart';
 import '../../../models/journey.dart';
+import '../../../models/truck.dart';
 import 'journey_data_source.dart';
 
 class JourneyLocalDataSource implements JourneyDataSource {
@@ -56,6 +59,12 @@ class JourneyLocalDataSource implements JourneyDataSource {
     ),
   ];
 
+  final List<Truck> _trucks = [
+    Truck(id: 'truck-1', name: 'Petit camion', type: TruckType.small, status: TruckStatus.inUse),
+    Truck(id: 'truck-2', name: 'Camion moyen', type: TruckType.medium, status: TruckStatus.inUse),
+    Truck(id: 'truck-3', name: 'Semi-remorque', type: TruckType.big, status: TruckStatus.inUse),
+  ];
+
   final _controller = StreamController<List<Journey>>.broadcast();
 
   List<Journey> _journeysForDriver(String driverId) {
@@ -68,6 +77,11 @@ class JourneyLocalDataSource implements JourneyDataSource {
     }
 
     return List.unmodifiable(journeysForDriver);
+  }
+
+  Truck? _truckById(String truckId) {
+    final index = _trucks.indexWhere((t) => t.id == truckId);
+    return index == -1 ? null : _trucks[index];
   }
 
   void _notify() {
@@ -89,6 +103,12 @@ class JourneyLocalDataSource implements JourneyDataSource {
   }
 
   @override
+  Stream<Truck?> watchTruck({required String truckId}) async* {
+    yield _truckById(truckId);
+    yield* _controller.stream.map((_) => _truckById(truckId));
+  }
+
+  @override
   Future<void> updateDeliveryStatus({
     required String deliveryUuid,
     required String newStatus,
@@ -100,5 +120,23 @@ class JourneyLocalDataSource implements JourneyDataSource {
       status: JourneyStatus.fromString(newStatus),
     );
     _notify();
+  }
+
+  @override
+  Future<void> updateJourneyOrderStatus({required String journeyUuid, required String orderId, required String newStatus}) {
+    // TODO: implement updateJourneyOrderStatus
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateJourneyStatus({required String journeyUuid, required String newStatus}) {
+    // TODO: implement updateJourneyStatus
+    throw UnimplementedError();
+  }
+
+  @override
+  Stream<Journey?> watchMyJourney() {
+    // TODO: implement watchMyJourney
+    throw UnimplementedError();
   }
 }

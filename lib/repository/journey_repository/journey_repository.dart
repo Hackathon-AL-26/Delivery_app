@@ -1,5 +1,4 @@
-import 'package:livreur_infflux/models/journey.dart';
-
+import '../../models/journey.dart';
 import 'data_sources/journey_data_source.dart';
 
 class JourneyRepository {
@@ -8,20 +7,28 @@ class JourneyRepository {
   JourneyRepository({required JourneyDataSource journeyDataSource})
       : _dataSource = journeyDataSource;
 
-  Stream<List<Journey>> watchJourney() {
-    return _dataSource.watchJourney();
+  Stream<Journey?> watchMyJourney() {
+    return _dataSource.watchMyJourney();
   }
 
-  Stream<List<Journey>> watchDriverJourney(String driverId) {
-    return _dataSource.watchDriverJourney(driverId: driverId);
-  }
-
-  Future<void> updateDeliveryStatus({
-    required String deliveryUuid,
+  Future<void> updateJourneyStatus({
+    required String journeyUuid,
     required String newStatus,
   }) {
-    return _dataSource.updateDeliveryStatus(
-      deliveryUuid: deliveryUuid,
+    return _dataSource.updateJourneyStatus(
+      journeyUuid: journeyUuid,
+      newStatus: newStatus,
+    );
+  }
+
+  Future<void> updateJourneyOrderStatus({
+    required String journeyUuid,
+    required String orderId,
+    required String newStatus,
+  }) {
+    return _dataSource.updateJourneyOrderStatus(
+      journeyUuid: journeyUuid,
+      orderId: orderId,
       newStatus: newStatus,
     );
   }

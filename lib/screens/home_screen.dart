@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:livreur_infflux/blocs/journey_bloc/journey_bloc.dart';
-import 'package:livreur_infflux/repository/journey_repository/data_sources/journey_local_data_source.dart';
+import 'package:livreur_infflux/repository/journey_repository/data_sources/journey_api_data_source.dart';
 import 'package:livreur_infflux/repository/journey_repository/journey_repository.dart';
 import 'package:livreur_infflux/screens/dash_board_screen.dart';
 import 'package:livreur_infflux/screens/delivery_screen.dart';
@@ -41,25 +41,23 @@ class _HomeScreenState extends State<HomeScreen> {
     NavigationDestination(
       icon: Icon(Icons.map_outlined),
       selectedIcon: Icon(Icons.map),
-      label: 'Analytics',
+      label: 'Route',
     ),
     NavigationDestination(
       icon: Icon(Icons.bar_chart_outlined),
       selectedIcon: Icon(Icons.bar_chart),
-      label: 'Paramètres',
+      label: 'Stats',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    //final driverId = user?.email ?? '';
-    final driverId = "driver2@logistics.com";
     return BlocProvider(
       create: (_) => JourneyBloc(
         repository: JourneyRepository(
-          journeyDataSource: JourneyLocalDataSource(),
+          journeyDataSource: JourneyApiDataSource(),
         ),
-      )..add(JourneyWatchDriverStarted(driverId: driverId)),
+      )..add(WatchMyJourney()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Livreur Infflux'),
@@ -71,10 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _screens,
-        ),
+        body: IndexedStack(index: _currentIndex, children: _screens),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) {

@@ -1,70 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../blocs/journey_bloc/journey_bloc.dart';
 import '../models/enums/journey_order_status.dart';
 import '../models/journey_order.dart';
-import '../widget/on_error_widget.dart';
+import '../models/order.dart';
 
-class DeliveryScreen extends StatelessWidget {
-  const DeliveryScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<JourneyBloc, JourneyState>(
-      builder: (context, state) {
-        if (state.status == JourneyBlocStatus.loading ||
-            state.status == JourneyBlocStatus.initial) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state.status == JourneyBlocStatus.error) {
-          return OnErrorWidget(
-            text: state.errorMessage ?? 'Erreur lors du chargement.',
-          );
-        }
 
-        final journey = state.journey;
-        if (journey == null || journey.journeyOrders.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.inbox_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outline),
-                const SizedBox(height: 12),
-                Text(
-                  'Aucune commande',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final orders = journey.journeyOrders;
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: orders.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            return _OrderCard(journeyOrder: orders[index]);
-          },
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Order Card
-// ─────────────────────────────────────────────
-class _OrderCard extends StatelessWidget {
+class OrderCard extends StatelessWidget {
   final JourneyOrder journeyOrder;
-  const _OrderCard({required this.journeyOrder});
+  final Order? order;
+  const OrderCard({
+    super.key,
+    required this.journeyOrder,
+    this.order,
+  });
+
+  Order? get _resolvedOrder => order ?? journeyOrder.order;
 
   Color _statusColor(JourneyOrderStatus s, ColorScheme c) {
     switch (s) {
@@ -110,8 +61,8 @@ class _OrderCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final sc = _statusColor(journeyOrder.status, colors);
-    final order = journeyOrder.order;
-    final store = journeyOrder.store;
+    final resolvedOrder = _resolvedOrder;
+    final storeName = journeyOrder.store?.name ?? resolvedOrder?.storeUuid;
 
     return Card(
       elevation: 1,
@@ -121,7 +72,7 @@ class _OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: ordre + store name + badge
+            // Ligne du haut
             Row(
               children: [
                 // Numéro d'ordre
@@ -148,14 +99,14 @@ class _OrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        store?.name ?? 'Commande',
+                        resolvedOrder?.id ?? journeyOrder.orderId,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (store?.email != null)
+                      if (storeName != null)
                         Text(
-                          store!.email!,
+                          storeName,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colors.onSurfaceVariant,
                           ),
@@ -188,23 +139,19 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
 
-            if (order != null || store != null) ...[
+            if (resolvedOrder != null) ...[
               const SizedBox(height: 12),
               const Divider(height: 1),
               const SizedBox(height: 12),
-              // Détails
-              Wrap(
-                spacing: 16,
-                runSpacing: 8,
+              // Détails commande
+              Row(
                 children: [
-                  if (order?.packageAmount != null)
-                    _MiniInfo(icon: Icons.inventory_2, label: '${order!.packageAmount} colis'),
-                  if (order?.price != null)
-                    _MiniInfo(icon: Icons.euro, label: '${order!.price!.toStringAsFixed(0)} €'),
-                  if (order?.deliveryDate != null)
-                    _MiniInfo(icon: Icons.calendar_month, label: order!.deliveryDate!),
-                  if (store?.deliveryHours != null)
-                    _MiniInfo(icon: Icons.schedule, label: store!.deliveryHours!),
+                  _MiniInfo(icon: Icons.inventory_2, label: '${resolvedOrder.packageAmount ?? 0} colis'),
+                  const SizedBox(width: 16),
+                  _MiniInfo(icon: Icons.euro, label: '${resolvedOrder.price ?? 0} €'),
+                  const SizedBox(width: 16),
+                  if (resolvedOrder.deliveryDate != null)
+                    _MiniInfo(icon: Icons.calendar_month, label: resolvedOrder.deliveryDate!),
                 ],
               ),
             ],
@@ -228,11 +175,7 @@ class _MiniInfo extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: colors.onSurfaceVariant),
         const SizedBox(width: 4),
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: colors.onSurfaceVariant)),
+        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant)),
       ],
     );
   }

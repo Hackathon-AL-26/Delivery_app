@@ -4,20 +4,26 @@ enum JourneyBlocStatus { initial, loading, loaded, error }
 
 final class JourneyState {
   final JourneyBlocStatus status;
-  final List<Journey> journeys;
+  final Journey? journey;
+  final String? errorMessage;
 
-  JourneyState({
+  const JourneyState({
     this.status = JourneyBlocStatus.initial,
-    this.journeys = const [],
+    this.journey,
+    this.errorMessage,
   });
 
   JourneyState copyWith({
     JourneyBlocStatus? status,
-    List<Journey>? journeys,
+    Journey? journey,
+    bool clearJourney = false,
+    String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return JourneyState(
       status: status ?? this.status,
-      journeys: journeys ?? this.journeys,
+      journey: clearJourney ? null : (journey ?? this.journey),
+      errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
