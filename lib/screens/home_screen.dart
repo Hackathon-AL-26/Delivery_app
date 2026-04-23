@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:livreur_infflux/blocs/journey_bloc/journey_bloc.dart';
+import 'package:livreur_infflux/repository/journey_repository/data_sources/journey_local_data_source.dart';
+import 'package:livreur_infflux/repository/journey_repository/journey_repository.dart';
 import 'package:livreur_infflux/screens/dash_board_screen.dart';
 import 'package:livreur_infflux/screens/delivery_screen.dart';
 import 'package:livreur_infflux/screens/route_screen.dart';
@@ -17,9 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _screens = const [
     DashBoardScreen(),
+    DeliveryScreen(),
     RouteScreen(),
     StatsScreen(),
-    DeliveryScreen(),
   ];
 
   final List<NavigationDestination> _destinations = const [
@@ -47,28 +52,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Livreur Infflux'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Se déconnecter',
-            onPressed: () => AuthService().signOut(),
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
-        destinations: _destinations,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+    //final driverId = user?.email ?? '';
+    final driverId = "driver2@logistics.com";
+    return BlocProvider(
+      create: (_) => JourneyBloc(
+        repository: JourneyRepository(
+          journeyDataSource: JourneyLocalDataSource(),
+        ),
+      )..add(JourneyWatchDriverStarted(driverId: driverId)),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Livreur Infflux'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              tooltip: 'Se déconnecter',
+              onPressed: () => AuthService().signOut(),
+            ),
+          ],
+        ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (index) {
+            setState(() => _currentIndex = index);
+          },
+          destinations: _destinations,
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        ),
       ),
     );
   }
