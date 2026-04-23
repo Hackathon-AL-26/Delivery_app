@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:livreur_infflux/blocs/journey_bloc/journey_bloc.dart';
 import 'package:livreur_infflux/models/journey.dart';
 import 'package:livreur_infflux/models/enums/journey_status.dart';
+import 'package:livreur_infflux/screens/journey_detail_screen.dart';
 
 enum _FilterMode { driverJourneys, notCompleted }
 
@@ -183,81 +184,94 @@ class _JourneyCard extends StatelessWidget {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Ligne du haut : UUID + badge statut
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  journey.uuid,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(_statusIcon(journey.status),
-                          size: 14, color: statusColor),
-                      const SizedBox(width: 4),
-                      Text(
-                        _statusLabel(journey.status),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: statusColor,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                if (journey.truckId != null)
-                  _InfoChip(
-                    icon: Icons.local_shipping,
-                    label: journey.truckId!,
-                  ),
-                if (journey.truckId != null) const SizedBox(width: 12),
-                _InfoChip(
-                  icon: Icons.schedule,
-                  label:
-                      '${_formatTime(journey.startTime)} → ${_formatTime(journey.endTime)}',
-                ),
-              ],
-            ),
-
-            if (journey.startTime != null) ...[
-              const SizedBox(height: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            JourneyDetailScreen.routeName,
+            arguments: JourneyDetailScreenArgs(journeyUuid: journey.uuid),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.calendar_month,
-                      size: 14, color: colors.onSurfaceVariant),
-                  const SizedBox(width: 4),
                   Text(
-                    _formatDate(journey.startTime),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
+                    journey.uuid,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _statusIcon(journey.status),
+                          size: 14,
+                          color: statusColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _statusLabel(journey.status),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  if (journey.truckId != null)
+                    _InfoChip(
+                      icon: Icons.local_shipping,
+                      label: journey.truckId!,
+                    ),
+                  if (journey.truckId != null) const SizedBox(width: 12),
+                  _InfoChip(
+                    icon: Icons.schedule,
+                    label:
+                        '${_formatTime(journey.startTime)} → ${_formatTime(journey.endTime)}',
+                  ),
+                ],
+              ),
+              if (journey.startTime != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_month,
+                      size: 14,
+                      color: colors.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _formatDate(journey.startTime),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
