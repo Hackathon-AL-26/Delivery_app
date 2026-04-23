@@ -21,6 +21,17 @@ final class JourneyOrderStatusChanged extends JourneyEvent {
   });
 }
 
+final class ReportIssue extends JourneyEvent {
+  final String journeyUuid;
+  final String newStatus;
+  ReportIssue({required this.journeyUuid, required this.newStatus});
+}
+
+final class AdvanceNextStep extends JourneyEvent {
+  final Map<String, dynamic> body;
+  AdvanceNextStep({required this.body});
+}
+
 
 final class _JourneyDataReceived extends JourneyEvent {
   final Journey? journey;

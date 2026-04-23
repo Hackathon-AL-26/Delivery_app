@@ -6,49 +6,12 @@ import 'package:livreur_infflux/repository/journey_repository/data_sources/journ
 import 'package:livreur_infflux/repository/journey_repository/journey_repository.dart';
 import 'package:livreur_infflux/screens/dash_board_screen.dart';
 import 'package:livreur_infflux/screens/delivery_screen.dart';
-import 'package:livreur_infflux/screens/route_screen.dart';
-import 'package:livreur_infflux/screens/stats_screen.dart';
 import 'package:livreur_infflux/services/auth_service.dart';
 
-class HomeScreen extends StatefulWidget {
+import '../models/enums/journey_status.dart';
+
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    DashBoardScreen(),
-    DeliveryScreen(),
-    RouteScreen(),
-    StatsScreen(),
-  ];
-
-  final List<NavigationDestination> _destinations = const [
-    NavigationDestination(
-      icon: Icon(Icons.dashboard_outlined),
-      selectedIcon: Icon(Icons.dashboard),
-      label: 'DashBoard',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.delivery_dining_outlined),
-      selectedIcon: Icon(Icons.delivery_dining),
-      label: 'Journal',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.map_outlined),
-      selectedIcon: Icon(Icons.map),
-      label: 'Route',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.bar_chart_outlined),
-      selectedIcon: Icon(Icons.bar_chart),
-      label: 'Stats',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -69,16 +32,80 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: IndexedStack(index: _currentIndex, children: _screens),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() => _currentIndex = index);
-          },
-          destinations: _destinations,
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        ),
+        body: const DashBoardScreen(),
+        floatingActionButton: const _DeliveryFab(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
+    );
+  }
+}
+
+/// FAB flottant qui redirige vers DeliveryScreen.
+/// Affiche un label contextuel selon le statut de la tournée.
+class _DeliveryFab extends StatelessWidget {
+  const _DeliveryFab();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<JourneyBloc, JourneyState>(
+      builder: (context, state) {
+        final journey = state.journey;
+        if (journey == null) return const SizedBox.shrink();
+
+        // Pas de FAB si la tournée est terminée
+        if (journey.status == JourneyStatus.completed) {
+          return const SizedBox.shrink();
+        }
+
+        final String label;
+        final IconData icon;
+        final Color bgColor;
+        final Color fgColor;
+
+        switch (journey.status) {
+          case JourneyStatus.planned:
+            label = 'Commencer le chargement';
+            icon = Icons.download;
+            bgColor = Theme.of(context).colorScheme.tertiary;
+            fgColor = Theme.of(context).colorScheme.onTertiary;
+          case JourneyStatus.loading:
+            label = 'Voir les commandes';
+            icon = Icons.local_shipping;
+            bgColor = Colors.orange;
+            fgColor = Colors.white;
+          case JourneyStatus.inDelivery:
+            label = 'Continuer les livraisons';
+            icon = Icons.delivery_dining;
+            bgColor = Theme.of(context).colorScheme.primary;
+            fgColor = Theme.of(context).colorScheme.onPrimary;
+          case JourneyStatus.completed:
+            label = '';
+            icon = Icons.check;
+            bgColor = Colors.green;
+            fgColor = Colors.white;
+        }
+
+        return FloatingActionButton.extended(
+          heroTag: 'delivery_fab',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider.value(
+                  value: context.read<JourneyBloc>(),
+                  child: const DeliveryScreen(),
+                ),
+              ),
+            );
+          },
+          backgroundColor: bgColor,
+          foregroundColor: fgColor,
+          icon: Icon(icon),
+          label: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        );
+      },
     );
   }
 }

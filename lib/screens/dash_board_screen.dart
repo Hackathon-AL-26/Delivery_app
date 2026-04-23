@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/journey_bloc/journey_bloc.dart';
+import '../models/enums/journey_order_status.dart';
 import '../models/enums/journey_status.dart';
 import '../models/journey.dart';
+import '../models/journey_order.dart';
+import '../widget/journey_card_widget.dart';
 import '../widget/on_error_widget.dart';
+import '../widget/order_card_widget.dart';
+import '../widget/report_alert_dialog.dart';
+import '../widget/truck_banner_widget.dart';
 
 class DashBoardScreen extends StatelessWidget {
   const DashBoardScreen({super.key});
@@ -26,45 +32,79 @@ class DashBoardScreen extends StatelessWidget {
         final journey = state.journey;
         if (journey == null) {
           return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.event_available,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.outline),
-                const SizedBox(height: 12),
-                Text(
-                  'Aucune tournée assignée',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.outline,
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.celebration, size: 64, color: Colors.green),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tournée du jour terminée !',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Vous avez effectué toutes vos livraisons du jour. Beau travail !',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           );
         }
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          // Padding en bas pour ne pas cacher du contenu sous le FAB
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
           children: [
-            // Greeting
-            Text(
-              'Bonjour !',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bonjour !',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Voici votre tournée du jour',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
                   ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Voici votre tournée du jour',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: () {
+                    reportAlertDialog(context);
+                  },
+                  icon: const Icon(Icons.warning_amber_rounded, size: 18),
+                  label: const Text('Signaler'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                    foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
                   ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
 
             // Camion
-            _TruckBanner(truckId: journey.truckId),
+            TruckBanner(truckId: journey.truckId),
             const SizedBox(height: 24),
 
             // Journey card
@@ -81,7 +121,7 @@ class DashBoardScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            _JourneyCard(journey: journey),
+            JourneyCard(journey: journey),
 
             const SizedBox(height: 24),
 
@@ -105,10 +145,73 @@ class DashBoardScreen extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Prochaine commande
+            ..._buildNextOrder(context, journey),
+
+            // Badge tournée terminée
+            if (journey.status == JourneyStatus.completed) ...[
+              const SizedBox(height: 24),
+              Card(
+                color: Colors.green.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Tournée terminée',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         );
       },
     );
+  }
+
+  List<Widget> _buildNextOrder(BuildContext context, Journey journey) {
+    final nextOrder = _findNextOrder(journey);
+    if (nextOrder == null) return [];
+
+    return [
+      Row(
+        children: [
+          Icon(Icons.next_plan, size: 20, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          Text(
+            'Prochaine livraison',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      OrderCard(journeyOrder: nextOrder),
+    ];
+  }
+
+  static JourneyOrder? _findNextOrder(Journey journey) {
+    for (final jo in journey.journeyOrders) {
+      if (jo.status != JourneyOrderStatus.delivered) {
+        return jo;
+      }
+    }
+    return null;
   }
 
   String _ordersSummary(Journey journey) {
@@ -117,236 +220,5 @@ class DashBoardScreen extends StatelessWidget {
         .where((jo) => jo.status.value == 'delivered')
         .length;
     return '$delivered / $total livrées';
-  }
-}
-
-// ─────────────────────────────────────────────
-// Bannière camion
-// ─────────────────────────────────────────────
-class _TruckBanner extends StatelessWidget {
-  final String? truckId;
-  const _TruckBanner({this.truckId});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: colors.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                Icons.local_shipping,
-                color: colors.onPrimaryContainer,
-                size: 32,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Votre camion',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: colors.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    truckId ?? 'Aucun camion assigné',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.onPrimaryContainer.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (truckId != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  truckId!,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colors.onPrimaryContainer,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Journey Card
-// ─────────────────────────────────────────────
-class _JourneyCard extends StatelessWidget {
-  final Journey journey;
-  const _JourneyCard({required this.journey});
-
-  Color _statusColor(JourneyStatus s, ColorScheme c) {
-    switch (s) {
-      case JourneyStatus.planned:
-        return c.primary;
-      case JourneyStatus.loading:
-        return c.tertiary;
-      case JourneyStatus.inDelivery:
-        return Colors.orange;
-      case JourneyStatus.completed:
-        return Colors.green;
-    }
-  }
-
-  String _statusLabel(JourneyStatus s) {
-    switch (s) {
-      case JourneyStatus.planned:
-        return 'Planifiée';
-      case JourneyStatus.loading:
-        return 'Chargement';
-      case JourneyStatus.inDelivery:
-        return 'En livraison';
-      case JourneyStatus.completed:
-        return 'Terminée';
-    }
-  }
-
-  IconData _statusIcon(JourneyStatus s) {
-    switch (s) {
-      case JourneyStatus.planned:
-        return Icons.calendar_today;
-      case JourneyStatus.loading:
-        return Icons.download;
-      case JourneyStatus.inDelivery:
-        return Icons.local_shipping;
-      case JourneyStatus.completed:
-        return Icons.check_circle;
-    }
-  }
-
-  String _fmt(DateTime? dt) {
-    if (dt == null) return '--:--';
-    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _fmtDate(DateTime? dt) {
-    if (dt == null) return '';
-    return '${dt.day}/${dt.month}/${dt.year}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final sc = _statusColor(journey.status, colors);
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Tournée',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: sc.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(_statusIcon(journey.status), size: 16, color: sc),
-                      const SizedBox(width: 4),
-                      Text(
-                        _statusLabel(journey.status),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: sc,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(height: 1),
-            const SizedBox(height: 16),
-
-            // Date & horaires
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_month, size: 16, color: colors.onSurfaceVariant),
-                      const SizedBox(width: 6),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Date',
-                              style: theme.textTheme.labelSmall?.copyWith(color: colors.outline)),
-                          Text(_fmtDate(journey.startTime),
-                              style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(Icons.schedule, size: 16, color: colors.onSurfaceVariant),
-                      const SizedBox(width: 6),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Horaires',
-                              style: theme.textTheme.labelSmall?.copyWith(color: colors.outline)),
-                          Text(
-                            '${_fmt(journey.startTime)} → ${_fmt(journey.endTime)}',
-                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

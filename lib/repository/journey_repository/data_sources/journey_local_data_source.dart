@@ -139,4 +139,16 @@ class JourneyLocalDataSource implements JourneyDataSource {
     // TODO: implement watchMyJourney
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> advanceNextStep({required Map<String, dynamic> body}) {
+    // TODO: implement advanceNextStep
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Journey?> fetchMyJourney() {
+    // TODO: implement fetchMyJourney
+    throw UnimplementedError();
+  }
 }

@@ -53,6 +53,9 @@ class JourneyApiDataSource implements JourneyDataSource {
 
 
   @override
+  Future<Journey?> fetchMyJourney() => _fetchMyJourney();
+
+  @override
   Stream<Journey?> watchMyJourney() => _poll(_fetchMyJourney);
 
   @override
@@ -79,13 +82,30 @@ class JourneyApiDataSource implements JourneyDataSource {
   }) async {
     final headers = await _authHeaders();
     final response = await _client.patch(
-      _uri('/journeys/$journeyUuid/journey-orders/$orderId'),
+      _uri('/journey-orders/$journeyUuid/$orderId/status'),
       headers: headers,
       body: jsonEncode({'status': newStatus}),
     );
     if (response.statusCode != 200) {
       throw Exception(
-        'PATCH /journeys/$journeyUuid/journey-orders/$orderId failed: ${response.statusCode}',
+        'PATCH /journey-orders/$journeyUuid/$orderId/status failed: ${response.statusCode}',
+      );
+    }
+  }
+
+  @override
+  Future<void> advanceNextStep({
+    required Map<String, dynamic> body,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await _client.post(
+      _uri('/journeys/me/next-step'),
+      headers: headers,
+      body: jsonEncode(body),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'POST /journeys/me/next-step failed: ${response.statusCode} ${response.body}',
       );
     }
   }

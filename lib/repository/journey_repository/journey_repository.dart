@@ -11,6 +11,10 @@ class JourneyRepository {
     return _dataSource.watchMyJourney();
   }
 
+  Future<Journey?> fetchMyJourney() {
+    return _dataSource.fetchMyJourney();
+  }
+
   Future<void> updateJourneyStatus({
     required String journeyUuid,
     required String newStatus,
@@ -31,5 +35,11 @@ class JourneyRepository {
       orderId: orderId,
       newStatus: newStatus,
     );
+  }
+
+  Future<void> advanceNextStep({
+    required Map<String, dynamic> body,
+  }) {
+    return _dataSource.advanceNextStep(body: body);
   }
 }

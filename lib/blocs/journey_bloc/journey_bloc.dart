@@ -20,6 +20,7 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     on<_JourneyLoadFailed>(_onLoadFailed);
     on<JourneyStatusChanged>(_onJourneyStatusChanged);
     on<JourneyOrderStatusChanged>(_onOrderStatusChanged);
+    on<AdvanceNextStep>(_onAdvanceNextStep);
   }
 
   Future<void> _onWatch(
@@ -83,6 +84,30 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
       );
     } catch (e) {
       emit(state.copyWith(status: JourneyBlocStatus.error, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onAdvanceNextStep(
+    AdvanceNextStep event,
+    Emitter<JourneyState> emit,
+  ) async {
+    emit(state.copyWith(advancing: true));
+    try {
+      await _repository.advanceNextStep(body: event.body);
+      // Rafraîchir les données immédiatement après le succès
+      final journey = await _repository.fetchMyJourney();
+      emit(state.copyWith(
+        advancing: false,
+        journey: journey,
+        clearJourney: journey == null,
+        clearErrorMessage: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        advancing: false,
+        status: JourneyBlocStatus.error,
+        errorMessage: e.toString(),
+      ));
     }
   }
 
