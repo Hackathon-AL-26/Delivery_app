@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../config/map_config.dart';
 import '../models/enums/journey_order_status.dart';
 import '../models/journey_order.dart';
 import '../models/store.dart';
@@ -26,6 +27,7 @@ class _DetailDeliveryOrderScreenState extends State<DetailDeliveryOrderScreen> {
   Store? _store;
   bool _loading = true;
   String? _error;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -76,7 +78,10 @@ class _DetailDeliveryOrderScreenState extends State<DetailDeliveryOrderScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16, 16, 16,
+                16 + MediaQuery.of(context).padding.bottom,
+              ),
               children: [
                 if (_store?.lat != null && _store?.lng != null) ...[
                   _SectionTitle(
@@ -86,36 +91,54 @@ class _DetailDeliveryOrderScreenState extends State<DetailDeliveryOrderScreen> {
                     borderRadius: BorderRadius.circular(14),
                     child: SizedBox(
                       height: 280,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter:
-                          LatLng(_store!.lat!, _store!.lng!),
-                          initialZoom: 15,
-                          interactionOptions: const InteractionOptions(
-                            flags: InteractiveFlag.all &
-                            ~InteractiveFlag.rotate,
-                          ),
-                        ),
+                      child: Stack(
                         children: [
-                          TileLayer(
-                            urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.infflux.livreur',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point:
-                                LatLng(_store!.lat!, _store!.lng!),
-                                width: 40,
-                                height: 40,
-                                child: Icon(
-                                  Icons.location_on,
-                                  color: colors.error,
-                                  size: 40,
-                                ),
+                          FlutterMap(
+                            mapController: _mapController,
+                            options: MapOptions(
+                              initialCenter:
+                              LatLng(_store!.lat!, _store!.lng!),
+                              initialZoom: 15,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.all &
+                                ~InteractiveFlag.rotate,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate: MapConfig.mapboxStyleUrl,
+                                userAgentPackageName: 'com.infflux.livreur',
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point:
+                                    LatLng(_store!.lat!, _store!.lng!),
+                                    width: 40,
+                                    height: 40,
+                                    child: Icon(
+                                      Icons.location_on,
+                                      color: colors.error,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
+                          ),
+                          Positioned(
+                            right: 10,
+                            bottom: 10,
+                            child: FloatingActionButton.small(
+                              heroTag: 'recenter_detail',
+                              onPressed: () {
+                                _mapController.move(
+                                  LatLng(_store!.lat!, _store!.lng!),
+                                  15,
+                                );
+                              },
+                              child: const Icon(Icons.my_location),
+                            ),
                           ),
                         ],
                       ),

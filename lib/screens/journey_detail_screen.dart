@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../config/map_config.dart';
 import '../models/enums/journey_order_status.dart';
 import '../models/enums/journey_status.dart';
 import '../models/journey.dart';
@@ -28,6 +29,7 @@ class _JourneyDetailScreenState extends State<JourneyDetailScreen> {
   /// Stores enrichis via GET /stores/{uuid}, indexés par storeUuid.
   final Map<String, Store> _stores = {};
   bool _loadingStores = true;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -113,7 +115,10 @@ class _JourneyDetailScreenState extends State<JourneyDetailScreen> {
       body: _loadingStores
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16, 16, 16,
+                16 + MediaQuery.of(context).padding.bottom,
+              ),
               children: [
                 _buildMap(context),
                 const SizedBox(height: 24),
@@ -201,78 +206,98 @@ class _JourneyDetailScreenState extends State<JourneyDetailScreen> {
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(
             height: 320,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCameraFit: bounds != null
-                    ? CameraFit.bounds(
-                        bounds: bounds,
-                        padding: const EdgeInsets.all(40),
-                      )
-                    : null,
-                initialCenter: routePoints.first,
-                initialZoom: 13,
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                ),
-              ),
+            child: Stack(
               children: [
-                TileLayer(
-                  urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.infflux.livreur',
-                ),
-                // Ligne de l'itinéraire
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: routePoints,
-                      strokeWidth: 4,
-                      color: colors.primary,
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCameraFit: bounds != null
+                        ? CameraFit.bounds(
+                            bounds: bounds,
+                            padding: const EdgeInsets.all(40),
+                          )
+                        : null,
+                    initialCenter: routePoints.first,
+                    initialZoom: 13,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: MapConfig.mapboxStyleUrl,
+                      userAgentPackageName: 'com.infflux.livreur',
+                    ),
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: routePoints,
+                          strokeWidth: 4,
+                          color: colors.primary,
+                        ),
+                      ],
+                    ),
+                    MarkerLayer(
+                      markers: List.generate(routePoints.length, (i) {
+                        final jo = sortedOrders[i];
+                        final isDelivered =
+                            jo.status == JourneyOrderStatus.delivered;
+                        final markerColor =
+                            isDelivered ? Colors.green : colors.primary;
+
+                        return Marker(
+                          point: routePoints[i],
+                          width: 36,
+                          height: 36,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: markerColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: isDelivered
+                                  ? const Icon(Icons.check,
+                                      size: 18, color: Colors.white)
+                                  : Text(
+                                      '${i + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ],
                 ),
-                // Marqueurs numérotés
-                MarkerLayer(
-                  markers: List.generate(routePoints.length, (i) {
-                    final jo = sortedOrders[i];
-                    final isDelivered =
-                        jo.status == JourneyOrderStatus.delivered;
-                    final markerColor =
-                        isDelivered ? Colors.green : colors.primary;
-
-                    return Marker(
-                      point: routePoints[i],
-                      width: 36,
-                      height: 36,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: markerColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.25),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: isDelivered
-                              ? const Icon(Icons.check,
-                                  size: 18, color: Colors.white)
-                              : Text(
-                                  '${i + 1}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    );
-                  }),
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: FloatingActionButton.small(
+                    heroTag: 'recenter_journey',
+                    onPressed: () {
+                      if (bounds != null) {
+                        _mapController.fitCamera(
+                          CameraFit.bounds(
+                            bounds: bounds,
+                            padding: const EdgeInsets.all(40),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Icon(Icons.my_location),
+                  ),
                 ),
               ],
             ),
@@ -283,9 +308,11 @@ class _JourneyDetailScreenState extends State<JourneyDetailScreen> {
   }
 
   String _fmtDateTime(DateTime dt) {
-    final d = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final y = (dt.year % 100).toString().padLeft(2, '0');
     final t = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-    return '$d à $t';
+    return '$d/$m/$y à $t';
   }
 
   String _deliveredSummary(Journey journey) {

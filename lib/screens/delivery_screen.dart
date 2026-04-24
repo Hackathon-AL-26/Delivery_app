@@ -168,7 +168,10 @@ class DeliveryScreen extends StatelessWidget {
           return Stack(
             children: [
               ListView(
-                padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 32),
+                padding: EdgeInsets.only(
+                  top: 16, left: 16, right: 16,
+                  bottom: 32 + MediaQuery.of(context).padding.bottom,
+                ),
                 children: [
                   // ── Carte de chargement ──
                   if (isLoadingPhase) ...[

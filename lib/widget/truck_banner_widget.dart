@@ -84,7 +84,7 @@ class TruckBanner extends StatelessWidget {
   String _subtitle() {
     if (truck == null) return truckId ?? 'Aucun camion assigné';
     final typeLabel = _truckTypeLabel(truck!.type);
-    return '$typeLabel';
+    return typeLabel;
   }
 
   String _statusLabel() {

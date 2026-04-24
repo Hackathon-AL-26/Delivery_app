@@ -55,7 +55,10 @@ class JourneyCard extends StatelessWidget {
 
   String _fmtDate(DateTime? dt) {
     if (dt == null) return '';
-    return '${dt.day}/${dt.month}/${dt.year}';
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final y = (dt.year % 100).toString().padLeft(2, '0');
+    return '$d/$m/$y';
   }
 
   @override
