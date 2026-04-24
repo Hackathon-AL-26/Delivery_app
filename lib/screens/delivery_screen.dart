@@ -12,6 +12,7 @@ import '../widget/on_error_widget.dart';
 import '../widget/order_card_widget.dart';
 import '../widget/success_banner_widget.dart';
 import 'detail_delivery_order_screen.dart';
+import 'journey_detail_screen.dart';
 
 class DeliveryScreen extends StatelessWidget {
   const DeliveryScreen({super.key});
@@ -98,7 +99,29 @@ class DeliveryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Livraisons')),
+      appBar: AppBar(
+        title: const Text('Livraisons'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.map_outlined),
+            tooltip: 'Voir la tournée',
+            onPressed: () {
+              final bloc = context.read<JourneyBloc>();
+              final repo = context.read<JourneyRepository>();
+              final journey = bloc.state.journey;
+              if (journey == null) return;
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => JourneyDetailScreen(
+                    journey: journey,
+                    repository: repo,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: BlocConsumer<JourneyBloc, JourneyState>(
         listenWhen: (prev, curr) {
           if (prev.advancing && !curr.advancing && curr.journey != null) {
@@ -187,12 +210,12 @@ class DeliveryScreen extends StatelessWidget {
                         isNextDelivery: isNext,
                         isLoading: isNext && isAdvancing,
                         onTap: () {
+                          final repo = context.read<JourneyRepository>();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => DetailDeliveryOrderScreen(
                                 journeyOrder: jo,
-                                repository: context
-                                    .read<JourneyRepository>(),
+                                repository: repo,
                               ),
                             ),
                           );

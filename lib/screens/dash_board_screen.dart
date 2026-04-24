@@ -16,6 +16,7 @@ import '../repository/journey_repository/journey_repository.dart';
 import '../widget/truck_banner_widget.dart';
 import 'delivery_screen.dart';
 import 'detail_delivery_order_screen.dart';
+import 'journey_detail_screen.dart';
 
 class DashBoardScreen extends StatelessWidget {
   const DashBoardScreen({super.key});
@@ -142,7 +143,20 @@ class DashBoardScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  JourneyCard(journey: journey),
+                  JourneyCard(
+                    journey: journey,
+                    onTap: () {
+                      final repo = context.read<JourneyRepository>();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => JourneyDetailScreen(
+                            journey: journey,
+                            repository: repo,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -241,11 +255,12 @@ class DashBoardScreen extends StatelessWidget {
       OrderCard(
         journeyOrder: nextOrder,
         onTap: () {
+          final repo = context.read<JourneyRepository>();
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => DetailDeliveryOrderScreen(
                 journeyOrder: nextOrder,
-                repository: context.read<JourneyRepository>(),
+                repository: repo,
               ),
             ),
           );
