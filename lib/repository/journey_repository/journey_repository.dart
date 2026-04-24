@@ -1,4 +1,5 @@
 import '../../models/journey.dart';
+import '../../models/truck.dart';
 import 'data_sources/journey_data_source.dart';
 
 class JourneyRepository {
@@ -41,5 +42,16 @@ class JourneyRepository {
     required Map<String, dynamic> body,
   }) {
     return _dataSource.advanceNextStep(body: body);
+  }
+
+  Future<void> updateTruckStatus({
+    required String truckId,
+    required String status,
+  }) {
+    return _dataSource.updateTruckStatus(truckId: truckId, status: status);
+  }
+
+  Future<Truck> fetchTruck({required String truckId}) {
+    return _dataSource.fetchTruck(truckId: truckId);
   }
 }

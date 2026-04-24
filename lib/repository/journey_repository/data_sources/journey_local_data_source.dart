@@ -151,4 +151,16 @@ class JourneyLocalDataSource implements JourneyDataSource {
     // TODO: implement fetchMyJourney
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> updateTruckStatus({required String truckId, required String status}) {
+    // TODO: implement updateTruckStatus
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Truck> fetchTruck({required String truckId}) {
+    // TODO: implement fetchTruck
+    throw UnimplementedError();
+  }
 }

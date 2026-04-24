@@ -6,11 +6,14 @@ import '../models/enums/journey_order_status.dart';
 import '../models/enums/journey_status.dart';
 import '../models/journey.dart';
 import '../models/journey_order.dart';
+import '../widget/dashboard_action_widget.dart';
 import '../widget/journey_card_widget.dart';
 import '../widget/on_error_widget.dart';
 import '../widget/order_card_widget.dart';
 import '../widget/report_alert_dialog.dart';
+import '../widget/reset_truck_satus_alert_dialog.dart';
 import '../widget/truck_banner_widget.dart';
+import 'delivery_screen.dart';
 
 class DashBoardScreen extends StatelessWidget {
   const DashBoardScreen({super.key});
@@ -42,17 +45,17 @@ class DashBoardScreen extends StatelessWidget {
                   Text(
                     'Tournée du jour terminée !',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Vous avez effectué toutes vos livraisons du jour. Beau travail !',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -61,122 +64,150 @@ class DashBoardScreen extends StatelessWidget {
           );
         }
 
-        return ListView(
-          // Padding en bas pour ne pas cacher du contenu sous le FAB
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+        return Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Bonjour !',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bonjour !',
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Voici votre tournée du jour',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Voici votre tournée du jour',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                      FilledButton.tonalIcon(
+                        onPressed: () {
+                          if(state.truckInMaintenance) {
+                            resetStatusAlertDialog(context);
+                          }else {
+                            reportAlertDialog(context);
+                          }
+                        },
+                        icon: const Icon(Icons.warning_amber_rounded, size: 18),
+                        label: const Text('Signaler'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.errorContainer,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onErrorContainer,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: () {
-                    reportAlertDialog(context);
-                  },
-                  icon: const Icon(Icons.warning_amber_rounded, size: 18),
-                  label: const Text('Signaler'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                  const SizedBox(height: 24),
+
+                  TruckBanner(
+                    truck: state.truck,
+                    truckId: journey.truckId,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-            // Camion
-            TruckBanner(truckId: journey.truckId),
-            const SizedBox(height: 24),
-
-            // Journey card
-            Row(
-              children: [
-                Icon(Icons.route, size: 20, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Ma tournée',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            JourneyCard(journey: journey),
-
-            const SizedBox(height: 24),
-
-            // Résumé commandes
-            Row(
-              children: [
-                Icon(Icons.list_alt, size: 20, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Commandes (${journey.journeyOrders.length})',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _ordersSummary(journey),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Prochaine commande
-            ..._buildNextOrder(context, journey),
-
-            // Badge tournée terminée
-            if (journey.status == JourneyStatus.completed) ...[
-              const SizedBox(height: 24),
-              Card(
-                color: Colors.green.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Row(
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.green),
+                      Icon(
+                        Icons.route,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Tournée terminée',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: Colors.green,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        'Ma tournée',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  JourneyCard(journey: journey),
+
+                  const SizedBox(height: 24),
+
+                  // Résumé commandes
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.list_alt,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Commandes (${journey.journeyOrders.length})',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _ordersSummary(journey),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  ..._buildNextOrder(context, journey),
+
+                  if (journey.status == JourneyStatus.completed) ...[
+                    const SizedBox(height: 24),
+                    Card(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tournée terminée',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ), // fin Expanded
+            // Bouton fixe en bas
+            if (journey.status != JourneyStatus.completed)
+              FixedDeliveryButton(
+                journey: journey,
+                disabled: state.truckInMaintenance,
+              ),
           ],
         );
       },
@@ -190,13 +221,17 @@ class DashBoardScreen extends StatelessWidget {
     return [
       Row(
         children: [
-          Icon(Icons.next_plan, size: 20, color: Theme.of(context).colorScheme.primary),
+          Icon(
+            Icons.next_plan,
+            size: 20,
+            color: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(width: 8),
           Text(
             'Prochaine livraison',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -222,3 +257,5 @@ class DashBoardScreen extends StatelessWidget {
     return '$delivered / $total livrées';
   }
 }
+
+

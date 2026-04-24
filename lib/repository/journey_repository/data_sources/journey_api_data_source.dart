@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../models/journey.dart';
+import '../../../models/truck.dart';
 import 'journey_data_source.dart';
 
 class JourneyApiDataSource implements JourneyDataSource {
@@ -108,5 +109,37 @@ class JourneyApiDataSource implements JourneyDataSource {
         'POST /journeys/me/next-step failed: ${response.statusCode} ${response.body}',
       );
     }
+  }
+
+  @override
+  Future<void> updateTruckStatus({
+    required String truckId,
+    required String status,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await _client.patch(
+      _uri('/trucks/$truckId/status'),
+      headers: headers,
+      body: jsonEncode({'status': status}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'PATCH /trucks/$truckId/status failed: ${response.statusCode}',
+      );
+    }
+  }
+
+  @override
+  Future<Truck> fetchTruck({required String truckId}) async {
+    final headers = await _authHeaders();
+    final response = await _client.get(
+      _uri('/trucks/$truckId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('GET /trucks/$truckId failed: ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return Truck.fromJson(body);
   }
 }

@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 
 import '../../models/journey.dart';
+import '../../models/enums/truck_status.dart';
+import '../../models/truck.dart';
 import '../../repository/journey_repository/journey_repository.dart';
 
 part 'journey_event.dart';
+
 part 'journey_state.dart';
 
 class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
@@ -13,21 +16,27 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
   StreamSubscription<Journey?>? _subscription;
 
   JourneyBloc({required JourneyRepository repository})
-      : _repository = repository,
-        super(const JourneyState()) {
+    : _repository = repository,
+      super(const JourneyState()) {
     on<WatchMyJourney>(_onWatch);
     on<_JourneyDataReceived>(_onDataReceived);
     on<_JourneyLoadFailed>(_onLoadFailed);
     on<JourneyStatusChanged>(_onJourneyStatusChanged);
     on<JourneyOrderStatusChanged>(_onOrderStatusChanged);
     on<AdvanceNextStep>(_onAdvanceNextStep);
+    on<TruckMaintenanceRequested>(_onTruckMaintenance);
   }
 
   Future<void> _onWatch(
     WatchMyJourney event,
     Emitter<JourneyState> emit,
   ) async {
-    emit(state.copyWith(status: JourneyBlocStatus.loading, clearErrorMessage: true));
+    emit(
+      state.copyWith(
+        status: JourneyBlocStatus.loading,
+        clearErrorMessage: true,
+      ),
+    );
     await _subscription?.cancel();
 
     _subscription = _repository.watchMyJourney().listen(
@@ -36,26 +45,43 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     );
   }
 
-  void _onDataReceived(
+  Future<void> _onDataReceived(
     _JourneyDataReceived event,
     Emitter<JourneyState> emit,
-  ) {
-    emit(state.copyWith(
-      status: JourneyBlocStatus.loaded,
-      journey: event.journey,
-      clearJourney: event.journey == null,
-      clearErrorMessage: true,
-    ));
+  ) async {
+    emit(
+      state.copyWith(
+        status: JourneyBlocStatus.loaded,
+        journey: event.journey,
+        clearJourney: event.journey == null,
+        clearErrorMessage: true,
+      ),
+    );
+
+    // Récupérer les infos du camion si on a un truckId
+    final truckId = event.journey?.truckId;
+    if (truckId != null && truckId.isNotEmpty) {
+      try {
+        final truck = await _repository.fetchTruck(truckId: truckId);
+        emit(
+          state.copyWith(
+            truck: truck,
+            truckInMaintenance: truck.status == TruckStatus.maintenance,
+          ),
+        );
+      } catch (_) {
+        // Silently ignore truck fetch errors
+      }
+    }
   }
 
-  void _onLoadFailed(
-    _JourneyLoadFailed event,
-    Emitter<JourneyState> emit,
-  ) {
-    emit(state.copyWith(
-      status: JourneyBlocStatus.error,
-      errorMessage: event.message,
-    ));
+  void _onLoadFailed(_JourneyLoadFailed event, Emitter<JourneyState> emit) {
+    emit(
+      state.copyWith(
+        status: JourneyBlocStatus.error,
+        errorMessage: event.message,
+      ),
+    );
   }
 
   Future<void> _onJourneyStatusChanged(
@@ -68,7 +94,12 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
         newStatus: event.newStatus,
       );
     } catch (e) {
-      emit(state.copyWith(status: JourneyBlocStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: JourneyBlocStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -83,7 +114,12 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
         newStatus: event.newStatus,
       );
     } catch (e) {
-      emit(state.copyWith(status: JourneyBlocStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: JourneyBlocStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -96,18 +132,46 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
       await _repository.advanceNextStep(body: event.body);
       // Rafraîchir les données immédiatement après le succès
       final journey = await _repository.fetchMyJourney();
-      emit(state.copyWith(
-        advancing: false,
-        journey: journey,
-        clearJourney: journey == null,
-        clearErrorMessage: true,
-      ));
+      emit(
+        state.copyWith(
+          advancing: false,
+          journey: journey,
+          clearJourney: journey == null,
+          clearErrorMessage: true,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        advancing: false,
-        status: JourneyBlocStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          advancing: false,
+          status: JourneyBlocStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onTruckMaintenance(
+    TruckMaintenanceRequested event,
+    Emitter<JourneyState> emit,
+  ) async {
+    try {
+      await _repository.updateTruckStatus(
+        truckId: event.truckId,
+        status: event.status,
+      );
+      if (event.status == 'maintenance') {
+        emit(state.copyWith(truckInMaintenance: true));
+      } else {
+        emit(state.copyWith(truckInMaintenance: false));
+      }
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: JourneyBlocStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 

@@ -32,6 +32,12 @@ final class AdvanceNextStep extends JourneyEvent {
   AdvanceNextStep({required this.body});
 }
 
+final class TruckMaintenanceRequested extends JourneyEvent {
+  final String truckId;
+  final String status;
+  TruckMaintenanceRequested({required this.truckId, required this.status});
+}
+
 
 final class _JourneyDataReceived extends JourneyEvent {
   final Journey? journey;
