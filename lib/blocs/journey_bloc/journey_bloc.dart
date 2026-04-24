@@ -24,7 +24,7 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     on<JourneyStatusChanged>(_onJourneyStatusChanged);
     on<JourneyOrderStatusChanged>(_onOrderStatusChanged);
     on<AdvanceNextStep>(_onAdvanceNextStep);
-    on<TruckMaintenanceRequested>(_onTruckMaintenance);
+    on<UpdateTruckStatus>(_onTruckMaintenance);
   }
 
   Future<void> _onWatch(
@@ -58,9 +58,11 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
       ),
     );
 
-    // Récupérer les infos du camion si on a un truckId
+    // Récupérer les infos du camion uniquement si le truckId a changé
     final truckId = event.journey?.truckId;
-    if (truckId != null && truckId.isNotEmpty) {
+    if (truckId != null &&
+        truckId.isNotEmpty &&
+        state.truck?.id != truckId) {
       try {
         final truck = await _repository.fetchTruck(truckId: truckId);
         emit(
@@ -130,7 +132,6 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
     emit(state.copyWith(advancing: true));
     try {
       await _repository.advanceNextStep(body: event.body);
-      // Rafraîchir les données immédiatement après le succès
       final journey = await _repository.fetchMyJourney();
       emit(
         state.copyWith(
@@ -152,7 +153,7 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
   }
 
   Future<void> _onTruckMaintenance(
-    TruckMaintenanceRequested event,
+    UpdateTruckStatus event,
     Emitter<JourneyState> emit,
   ) async {
     try {

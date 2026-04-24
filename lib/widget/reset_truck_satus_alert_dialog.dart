@@ -42,7 +42,7 @@ void resetStatusAlertDialog(BuildContext context) {
                 onPressed: truckId != null
                     ? () {
                         context.read<JourneyBloc>().add(
-                          TruckMaintenanceRequested(
+                          UpdateTruckStatus(
                               truckId: truckId,
                               status: 'in_use',
                           ),

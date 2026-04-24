@@ -48,7 +48,7 @@ void reportAlertDialog(BuildContext context) {
                 onPressed: truckId != null
                     ? () {
                         context.read<JourneyBloc>().add(
-                          TruckMaintenanceRequested(
+                          UpdateTruckStatus(
                               truckId: truckId,
                               status: 'maintenance'
                           ),

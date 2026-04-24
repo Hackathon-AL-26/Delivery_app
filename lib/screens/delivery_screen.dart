@@ -160,6 +160,7 @@ class DeliveryScreen extends StatelessWidget {
                               context
                                   .read<JourneyBloc>()
                                   .add(AdvanceNextStep(body: body));
+                              context.read<JourneyBloc>().add(UpdateTruckStatus(truckId: journey.truckId ?? "", status: "in_use"));
                             },
                     ),
                     const SizedBox(height: 16),
