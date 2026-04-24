@@ -91,13 +91,19 @@ class OrderCard extends StatelessWidget {
             if (isNextDelivery)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 16,
+                ),
                 color: sc,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(_statusIcon(journeyOrder.status),
-                        size: 18, color: Colors.white),
+                    Icon(
+                      _statusIcon(journeyOrder.status),
+                      size: 18,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       _statusLabel(journeyOrder.status).toUpperCase(),
@@ -166,7 +172,9 @@ class OrderCard extends StatelessWidget {
                       if (!isNextDelivery)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: sc.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -174,8 +182,11 @@ class OrderCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(_statusIcon(journeyOrder.status),
-                                  size: 14, color: sc),
+                              Icon(
+                                _statusIcon(journeyOrder.status),
+                                size: 14,
+                                color: sc,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 _statusLabel(journeyOrder.status),
@@ -200,21 +211,19 @@ class OrderCard extends StatelessWidget {
                       children: [
                         if (order?.packageAmount != null)
                           _MiniInfo(
-                              icon: Icons.inventory_2,
-                              label: '${order!.packageAmount} colis'),
-                        if (order?.price != null)
-                          _MiniInfo(
-                              icon: Icons.euro,
-                              label:
-                                  '${order!.price!.toStringAsFixed(0)} €'),
+                            icon: Icons.inventory_2,
+                            label: '${order!.packageAmount} colis',
+                          ),
                         if (order?.deliveryDate != null)
                           _MiniInfo(
-                              icon: Icons.calendar_month,
-                              label: order!.deliveryDate!),
+                            icon: Icons.calendar_month,
+                            label: order!.deliveryDate!,
+                          ),
                         if (store?.deliveryHours != null)
                           _MiniInfo(
-                              icon: Icons.schedule,
-                              label: store!.deliveryHours!),
+                            icon: Icons.schedule,
+                            label: store!.deliveryHours!,
+                          ),
                       ],
                     ),
                   ],
@@ -267,8 +276,11 @@ class OrderCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.check_circle,
-                              color: Colors.green, size: 18),
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                            size: 18,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Livrée',
@@ -294,6 +306,7 @@ class OrderCard extends StatelessWidget {
 class _MiniInfo extends StatelessWidget {
   final IconData icon;
   final String label;
+
   const _MiniInfo({required this.icon, required this.label});
 
   @override
@@ -304,11 +317,12 @@ class _MiniInfo extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: colors.onSurfaceVariant),
         const SizedBox(width: 4),
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: colors.onSurfaceVariant)),
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+        ),
       ],
     );
   }

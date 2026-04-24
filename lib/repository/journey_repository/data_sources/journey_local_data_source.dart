@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:livreur_infflux/models/store.dart';
+
 import '../../../models/enums/journey_status.dart';
 import '../../../models/enums/truck_type.dart';
 import '../../../models/enums/truck_status.dart';
@@ -161,6 +163,12 @@ class JourneyLocalDataSource implements JourneyDataSource {
   @override
   Future<Truck> fetchTruck({required String truckId}) {
     // TODO: implement fetchTruck
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Store> fetchStore({required String storeUuid}) {
+    // TODO: implement fetchStore
     throw UnimplementedError();
   }
 }

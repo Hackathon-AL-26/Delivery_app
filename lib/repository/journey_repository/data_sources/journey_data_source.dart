@@ -1,4 +1,5 @@
 import '../../../models/journey.dart';
+import '../../../models/store.dart';
 import '../../../models/truck.dart';
 
 abstract class JourneyDataSource {
@@ -34,4 +35,7 @@ abstract class JourneyDataSource {
 
   /// Récupère les infos du camion via GET /trucks/{id}.
   Future<Truck> fetchTruck({required String truckId});
+
+  /// Récupère les infos d'un magasin via GET /stores/{uuid}.
+  Future<Store> fetchStore({required String storeUuid});
 }

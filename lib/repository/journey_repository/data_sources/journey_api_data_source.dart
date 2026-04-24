@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../models/journey.dart';
+import '../../../models/store.dart';
 import '../../../models/truck.dart';
 import 'journey_data_source.dart';
 
@@ -141,5 +142,19 @@ class JourneyApiDataSource implements JourneyDataSource {
     }
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     return Truck.fromJson(body);
+  }
+
+  @override
+  Future<Store> fetchStore({required String storeUuid}) async {
+    final headers = await _authHeaders();
+    final response = await _client.get(
+      _uri('/stores/$storeUuid'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('GET /stores/$storeUuid failed: ${response.statusCode}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    return Store.fromJson(body);
   }
 }

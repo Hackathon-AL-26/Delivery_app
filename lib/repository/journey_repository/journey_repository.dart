@@ -1,4 +1,5 @@
 import '../../models/journey.dart';
+import '../../models/store.dart';
 import '../../models/truck.dart';
 import 'data_sources/journey_data_source.dart';
 
@@ -53,5 +54,9 @@ class JourneyRepository {
 
   Future<Truck> fetchTruck({required String truckId}) {
     return _dataSource.fetchTruck(truckId: truckId);
+  }
+
+  Future<Store> fetchStore({required String storeUuid}) {
+    return _dataSource.fetchStore(storeUuid: storeUuid);
   }
 }

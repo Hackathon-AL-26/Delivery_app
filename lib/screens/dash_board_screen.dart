@@ -12,8 +12,10 @@ import '../widget/on_error_widget.dart';
 import '../widget/order_card_widget.dart';
 import '../widget/report_alert_dialog.dart';
 import '../widget/reset_truck_satus_alert_dialog.dart';
+import '../repository/journey_repository/journey_repository.dart';
 import '../widget/truck_banner_widget.dart';
 import 'delivery_screen.dart';
+import 'detail_delivery_order_screen.dart';
 
 class DashBoardScreen extends StatelessWidget {
   const DashBoardScreen({super.key});
@@ -236,7 +238,19 @@ class DashBoardScreen extends StatelessWidget {
         ],
       ),
       const SizedBox(height: 12),
-      OrderCard(journeyOrder: nextOrder),
+      OrderCard(
+        journeyOrder: nextOrder,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DetailDeliveryOrderScreen(
+                journeyOrder: nextOrder,
+                repository: context.read<JourneyRepository>(),
+              ),
+            ),
+          );
+        },
+      ),
     ];
   }
 

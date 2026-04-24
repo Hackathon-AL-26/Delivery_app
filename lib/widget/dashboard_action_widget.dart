@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/journey_bloc/journey_bloc.dart';
 import '../models/enums/journey_status.dart';
 import '../models/journey.dart';
+import '../repository/journey_repository/journey_repository.dart';
 import '../screens/delivery_screen.dart';
 
 class FixedDeliveryButton extends StatelessWidget {
@@ -91,11 +92,16 @@ class FixedDeliveryButton extends StatelessWidget {
                 onPressed: disabled
                     ? null
                     : () {
+                  final bloc = context.read<JourneyBloc>();
+                  final repo = context.read<JourneyRepository>();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: context.read<JourneyBloc>(),
-                        child: const DeliveryScreen(),
+                      builder: (_) => RepositoryProvider.value(
+                        value: repo,
+                        child: BlocProvider.value(
+                          value: bloc,
+                          child: const DeliveryScreen(),
+                        ),
                       ),
                     ),
                   );

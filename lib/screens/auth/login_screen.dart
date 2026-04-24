@@ -225,14 +225,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Mot de passe oublié
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _handleResetPassword,
-                      child: const Text('Mot de passe oublié ?'),
-                    ),
-                  ),
                   const SizedBox(height: 16),
 
                   // Bouton connexion

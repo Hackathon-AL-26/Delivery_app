@@ -6,10 +6,12 @@ import '../models/enums/journey_order_status.dart';
 import '../models/enums/journey_status.dart';
 import '../models/journey.dart';
 import '../models/journey_order.dart';
+import '../repository/journey_repository/journey_repository.dart';
 import '../widget/loading_phase_card_widget.dart';
 import '../widget/on_error_widget.dart';
 import '../widget/order_card_widget.dart';
 import '../widget/success_banner_widget.dart';
+import 'detail_delivery_order_screen.dart';
 
 class DeliveryScreen extends StatelessWidget {
   const DeliveryScreen({super.key});
@@ -184,6 +186,17 @@ class DeliveryScreen extends StatelessWidget {
                         journeyOrder: jo,
                         isNextDelivery: isNext,
                         isLoading: isNext && isAdvancing,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => DetailDeliveryOrderScreen(
+                                journeyOrder: jo,
+                                repository: context
+                                    .read<JourneyRepository>(),
+                              ),
+                            ),
+                          );
+                        },
                         onAdvanceStep: isNext && !isAdvancing
                             ? () {
                                 context.read<JourneyBloc>().add(

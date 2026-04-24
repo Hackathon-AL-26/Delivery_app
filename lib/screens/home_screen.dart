@@ -12,24 +12,28 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => JourneyBloc(
-        repository: JourneyRepository(
-          journeyDataSource: JourneyApiDataSource(),
+    final repository = JourneyRepository(
+      journeyDataSource: JourneyApiDataSource(),
+    );
+
+    return RepositoryProvider.value(
+      value: repository,
+      child: BlocProvider(
+        create: (_) => JourneyBloc(repository: repository)
+          ..add(WatchMyJourney()),
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('FluxTMS'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout),
+                tooltip: 'Se déconnecter',
+                onPressed: () => AuthService().signOut(),
+              ),
+            ],
+          ),
+          body: const DashBoardScreen(),
         ),
-      )..add(WatchMyJourney()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Livreur Infflux'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Se déconnecter',
-              onPressed: () => AuthService().signOut(),
-            ),
-          ],
-        ),
-        body: const DashBoardScreen(),
       ),
     );
   }
