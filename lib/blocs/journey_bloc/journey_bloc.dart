@@ -161,16 +161,32 @@ class JourneyBloc extends Bloc<JourneyEvent, JourneyState> {
         truckId: event.truckId,
         status: event.status,
       );
-      if (event.status == 'maintenance') {
-        emit(state.copyWith(truckInMaintenance: true));
-      } else {
-        emit(state.copyWith(truckInMaintenance: false));
+
+      Truck? updatedTruck;
+      try {
+        updatedTruck = await _repository.fetchTruck(truckId: event.truckId);
+      } catch (_) {
+        if (state.truck?.id == event.truckId) {
+          updatedTruck = state.truck!.copyWith(
+            status: TruckStatus.fromString(event.status),
+          );
+        }
       }
-    } catch (e) {
+
       emit(
         state.copyWith(
-          status: JourneyBlocStatus.error,
-          errorMessage: e.toString(),
+          truck: updatedTruck,
+          truckInMaintenance:
+              (updatedTruck?.status ?? TruckStatus.fromString(event.status)) ==
+              TruckStatus.maintenance,
+          clearErrorMessage: true,
+        ),
+      );
+    } catch (e) {
+      // Ne pas passer en error — garder l'état actuel et signaler l'erreur
+      emit(
+        state.copyWith(
+          errorMessage: 'Erreur signalement camion: ${e.toString()}',
         ),
       );
     }

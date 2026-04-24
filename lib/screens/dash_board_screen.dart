@@ -14,7 +14,6 @@ import '../widget/report_alert_dialog.dart';
 import '../widget/reset_truck_satus_alert_dialog.dart';
 import '../repository/journey_repository/journey_repository.dart';
 import '../widget/truck_banner_widget.dart';
-import 'delivery_screen.dart';
 import 'detail_delivery_order_screen.dart';
 import 'journey_detail_screen.dart';
 
@@ -286,5 +285,4 @@ class DashBoardScreen extends StatelessWidget {
     return '$delivered / $total livrées';
   }
 }
-
 

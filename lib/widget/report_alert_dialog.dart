@@ -54,9 +54,18 @@ void reportAlertDialog(BuildContext context) {
                           ),
                         );
                         Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Camion signalé en maintenance.'),
+                          ),
+                        );
                       }
                     : null,
-                child: const Text('Signaler un probleme'),
+                child: Text(
+                  truckId != null
+                      ? 'Signaler un probleme'
+                      : 'Aucun camion assigné',
+                ),
               ),
             ],
           );
